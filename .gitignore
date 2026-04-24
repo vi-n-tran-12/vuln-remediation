@@ -1,0 +1,7 @@
+.env
+data/
+__pycache__/
+.env
+data/
+__pycache__/
+nohup.out

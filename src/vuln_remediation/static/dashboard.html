@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vulnerability Remediation</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0d1117;color:#c9d1d9;padding:2rem}
+h1{color:#58a6ff;margin-bottom:.3rem}
+.sub{color:#8b949e;margin-bottom:2rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:2rem}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.2rem;text-align:center}
+.card .n{font-size:2rem;font-weight:700;color:#58a6ff}
+.card .l{font-size:.8rem;color:#8b949e;margin-top:.2rem}
+.card.ok .n{color:#3fb950} .card.err .n{color:#f85149} .card.rate .n{color:#d2a8ff}
+.card.clickable{cursor:pointer} .card.clickable:hover{border-color:#58a6ff}
+table{width:100%;border-collapse:collapse;background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+th{background:#21262d;text-align:left;padding:.7rem 1rem;font-size:.8rem;color:#8b949e;text-transform:uppercase}
+td{padding:.7rem 1rem;border-top:1px solid #30363d}
+a{color:#58a6ff;text-decoration:none} a:hover{text-decoration:underline}
+.b{display:inline-block;padding:.15rem .5rem;border-radius:10px;font-size:.7rem;font-weight:600}
+.b.pending{background:#30363d;color:#8b949e}
+.b.running,.b.session_created{background:#0c2d6b;color:#58a6ff}
+.b.needs_input{background:#3d2e00;color:#d29922}
+.b.completed{background:#0d3117;color:#3fb950}
+.b.failed{background:#3d1117;color:#f85149}
+.foot{color:#8b949e;font-size:.8rem;margin-top:1rem}
+.alert{background:#2d1b00;border:1px solid #d29922;border-radius:8px;padding:1rem;margin-bottom:1.5rem;display:none}
+.alert h3{color:#d29922;margin-bottom:.5rem;font-size:.95rem}
+.alert a{color:#d29922}
+.alert-item{padding:.4rem 0;border-bottom:1px solid #3d2e00}
+.alert-item:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<h1>🛡️ Vulnerability Remediation</h1>
+<p class="sub">Powered by Devin &middot; auto-refreshes every 10s</p>
+<div class="cards" id="m">Loading&hellip;</div>
+<div class="alert" id="alert"></div>
+<span id="filterLabel" style="color:#8b949e;font-size:.85rem"></span>
+<table><thead><tr><th>Issue</th><th>Status</th><th>Devin Session</th><th>Result</th><th>Artifacts</th><th>Audit</th></tr></thead>
+<tbody id="t"><tr><td colspan="4">Loading&hellip;</td></tr></tbody></table>
+<p class="foot" id="f"></p>
+<script>
+let allTasks=[];
+let activeFilter=null;
+
+function filterTable(status){
+ if(activeFilter===status){activeFilter=null}else{activeFilter=status}
+ renderTable();
+}
+
+function renderTable(){
+ const filtered=activeFilter
+   ?allTasks.filter(t=>activeFilter==='running'
+     ?t.status==='running'||t.status==='session_created'
+     :t.status===activeFilter)
+   :allTasks;
+ const label=activeFilter?` (showing: ${activeFilter}) <a href="#" onclick="filterTable(null);return false" style="font-size:.8rem">clear</a>`:'';
+ document.getElementById('filterLabel').innerHTML=label;
+ document.getElementById('t').innerHTML=filtered.length?filtered.map(t=>{
+   return `<tr><td><a href="${t.issue_url}" target="_blank">#${t.issue_number}</a> ${t.issue_title}</td>`+
+    `<td><span class="b ${t.status}">${t.status}</span></td>`+
+    `<td>${t.session_url?`<a href="${t.session_url}" target="_blank">View</a>`:'—'}</td>`+
+    `<td>${t.pr_url?`<a href="${t.pr_url}" target="_blank">View PR</a>`:t.error||'—'}</td>`+
+    `<td>${t.attachments&&t.attachments.length?t.attachments.map(a=>`<a href="/api/logs/${t.issue_number}/attachments/${a}" target="_blank">${a}</a>`).join(', '):t.pr_url?`<a href="${t.pr_url}/files" target="_blank">PR Diff</a>`:'—'}</td>`+
+    `<td>${t.log_file?`<a href="/api/logs/${t.issue_number}" target="_blank">View Log</a>`:'—'}</td></tr>`;
+  }).join(''):'<tr><td colspan="6">No matching tasks.</td></tr>';
+}
+
+async function r(){
+ try{
+  const[a,b]=await Promise.all([fetch('/api/metrics').then(r=>r.json()),fetch('/api/tasks').then(r=>r.json())]);
+  allTasks=b;
+  document.getElementById('m').innerHTML=
+   `<div class="card clickable" onclick="filterTable('running')"><div class="n">${a.running}</div><div class="l">Running</div></div>`+
+   `<div class="card clickable" style="${a.needs_input?'border-color:#d29922':''}" onclick="filterTable('needs_input')"><div class="n" style="${a.needs_input?'color:#d29922':''}">${a.needs_input||0}</div><div class="l">Needs Input</div></div>`+
+   `<div class="card ok clickable" onclick="filterTable('completed')"><div class="n">${a.completed}</div><div class="l">Completed</div></div>`+
+   `<div class="card err clickable" onclick="filterTable('failed')"><div class="n">${a.failed}</div><div class="l">Failed</div></div>`+
+   `<div class="card rate"><div class="n">${(a.success_rate*100).toFixed(0)}%</div><div class="l">Success</div></div>`+
+   `<div class="card"><div class="n">${a.avg_remediation_minutes}m</div><div class="l">Avg Time</div></div>`;
+  const needsInput=b.filter(t=>t.status==='needs_input');
+  const alertEl=document.getElementById('alert');
+  if(needsInput.length){
+   alertEl.style.display='block';
+   alertEl.innerHTML=`<h3>⏸️ ${needsInput.length} task${needsInput.length>1?'s':''} waiting for your input</h3>`+
+    needsInput.map(t=>`<div class="alert-item"><a href="${t.issue_url}" target="_blank">#${t.issue_number}</a> ${t.issue_title} — <a href="${t.session_url}" target="_blank">Respond in Devin →</a></div>`).join('');
+  }else{alertEl.style.display='none'}
+  renderTable();
+  document.getElementById('f').textContent='Last refresh: '+new Date().toLocaleTimeString();
+ }catch(e){console.error('Refresh failed:',e)}
+}
+r();setInterval(r,10000);
+</script>
+</body></html>
