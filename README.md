@@ -8,9 +8,9 @@ This system watches a GitHub repository for security issues and uses [Devin](htt
 
 | Issue | Severity | Time to PR | Pull Request |
 |-------|----------|-----------|--------------|
-| [#1 SQL Injection via guest token RLS](https://github.com/vi-n-tran-12/superset/issues/1) | Critical | 13 min | [PR #5](https://github.com/vi-n-tran-12/superset/pull/5) |
-| [#2 Default JWT secret — no startup validation](https://github.com/vi-n-tran-12/superset/issues/2) | Critical | 8 min | [PR #4](https://github.com/vi-n-tran-12/superset/pull/4) |
-| [#3 SSRF via database validation endpoint](https://github.com/vi-n-tran-12/superset/issues/3) | High | 14 min | [PR #6](https://github.com/vi-n-tran-12/superset/pull/6) |
+| [#10 SQL Injection via guest token RLS](https://github.com/vi-n-tran-12/superset/issues/10) | Critical | ~13 min | _Pending_ |
+| [#11 Default JWT secret — no startup validation](https://github.com/vi-n-tran-12/superset/issues/11) | Critical | ~8 min | _Pending_ |
+| [#12 SSRF via database validation endpoint](https://github.com/vi-n-tran-12/superset/issues/12) | High | ~14 min | _Pending_ |
 
 - **3/3** issues remediated automatically
 - **100%** success rate
@@ -19,13 +19,13 @@ This system watches a GitHub repository for security issues and uses [Devin](htt
 
 ### The Attack Chain
 
-Issues #1 and #2 chain together into an unauthenticated data breach:
+Issues #10 and #11 chain together into an unauthenticated data breach:
 
 1. **Forge a guest token** using the default JWT secret (public in source code, no startup check)
 2. **Inject SQL** via the unsanitized RLS clause in the forged token
 3. **Exfiltrate any data** from any connected database
 
-Issue #3 is independent: any authenticated user can port-scan internal networks and probe cloud metadata endpoints through the database validation API.
+Issue #12 is independent: any authenticated user can port-scan internal networks and probe cloud metadata endpoints through the database validation API.
 
 These were found through manual code audit of [Apache Superset](https://github.com/apache/superset), a widely-deployed data platform.
 
