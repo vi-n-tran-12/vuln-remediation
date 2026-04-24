@@ -280,6 +280,7 @@ class Orchestrator:
     async def _handle_status(self, task: RemediationTask, status: DevinSessionStatus) -> None:
         """Route session status to the appropriate handler."""
         handler = {
+            "new": self._on_running,
             "running": self._on_running,
             "exit": self._on_exit,
             "suspended": self._on_suspended,
