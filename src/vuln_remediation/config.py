@@ -49,4 +49,4 @@ class Settings(BaseSettings):
         return self.github_repo.split("/")[1]
 
 
-settings = Settings()  # type: ignore[call-arg]
+

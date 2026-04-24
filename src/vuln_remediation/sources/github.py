@@ -71,7 +71,6 @@ class GitHubClient:
 
         issues: list[GitHubIssue] = []
         for item in resp.json():
-            # GitHub returns PRs in the issues endpoint — skip them
             if "pull_request" in item:
                 continue
             issues.append(

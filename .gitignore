@@ -1,7 +1,6 @@
 .env
 data/
 __pycache__/
-.env
-data/
-__pycache__/
+.venv/
+*.log
 nohup.out

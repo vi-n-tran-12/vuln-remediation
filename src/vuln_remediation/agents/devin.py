@@ -124,7 +124,6 @@ class DevinClient:
         """List attachments (files, screenshots, logs) produced by a session."""
         resp = await self._client.get(f"{self._base_url}/sessions/{session_id}/attachments")
         data = self._handle_response(resp)
-        # API may return a raw list or a dict with items
         if isinstance(data, list):
             return data  # type: ignore[return-value]
         return data.get("items", data.get("attachments", []))  # type: ignore[return-value]
@@ -137,8 +136,7 @@ class DevinClient:
         return resp.content
 
     async def close_session(self, session_id: str) -> None:
-        """Close a running session. Transitions status to 'exit'.
-        Silently succeeds if the session is already closed."""
+        """Close a running session. Silently succeeds if already closed."""
         try:
             resp = await self._client.delete(f"{self._base_url}/sessions/{session_id}")
             if resp.status_code < 400:
@@ -250,7 +248,6 @@ class DevinClient:
             try:
                 resp = await self._client.request(method, f"{self._base_url}{path}", **kwargs)  # type: ignore[arg-type]
                 if resp.status_code == 429:
-                    # Rate limited — back off and retry
                     wait = min(2 ** attempt * 2, 30)
                     logger.warning("devin_rate_limited", attempt=attempt, wait=wait)
                     await asyncio.sleep(wait)
