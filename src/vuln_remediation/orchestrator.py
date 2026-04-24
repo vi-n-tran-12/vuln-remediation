@@ -47,6 +47,9 @@ def _detect_priority(title: str, body: str) -> str:
     return "medium"
 
 
+RETRY_COOLDOWN_MINUTES = 10
+
+
 # ---------------------------------------------------------------------------
 # Prompt builder
 # ---------------------------------------------------------------------------
@@ -245,6 +248,17 @@ class Orchestrator:
                     priority=_detect_priority(issue.title, issue.body or ""),
                 )
                 logger.info("issue_discovered", issue=issue.number, title=issue.title)
+            else:
+                # Retry failed tasks after cooldown
+                task = self._tasks[issue.number]
+                if task.status == TaskStatus.FAILED:
+                    minutes_since_failure = (
+                        datetime.now(timezone.utc) - task.updated_at
+                    ).total_seconds() / 60
+                    if minutes_since_failure >= RETRY_COOLDOWN_MINUTES:
+                        task.transition(TaskStatus.PENDING)
+                        task.error = None
+                        logger.info("task_retry", issue=issue.number)
 
     # ------------------------------------------------------------------
     # Dispatch
