@@ -32,6 +32,20 @@ logger = structlog.get_logger()
 
 GRACE_PERIOD_MINUTES = 5
 
+PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+
+
+def _detect_priority(title: str, body: str) -> str:
+    """Detect severity/priority from issue title and body text."""
+    text = (title + " " + body).lower()
+    if "critical" in text:
+        return "critical"
+    if "high" in text:
+        return "high"
+    if "low" in text:
+        return "low"
+    return "medium"
+
 
 # ---------------------------------------------------------------------------
 # Prompt builder
@@ -92,7 +106,10 @@ class Orchestrator:
         return list(self._tasks.values())
 
     def get_tasks(self) -> list[RemediationTask]:
-        return list(self._tasks.values())
+        return sorted(
+            self._tasks.values(),
+            key=lambda t: PRIORITY_ORDER.get(t.priority, 2),
+        )
 
     def get_metrics(self) -> dict[str, Any]:
         tasks = list(self._tasks.values())
@@ -225,6 +242,7 @@ class Orchestrator:
                     issue_number=issue.number,
                     issue_title=issue.title,
                     issue_url=issue.html_url,
+                    priority=_detect_priority(issue.title, issue.body or ""),
                 )
                 logger.info("issue_discovered", issue=issue.number, title=issue.title)
 

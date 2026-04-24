@@ -35,6 +35,7 @@ class RemediationTask(BaseModel):
     issue_number: int
     issue_title: str
     issue_url: str
+    priority: str = "medium"  # critical, high, medium, low
     status: TaskStatus = TaskStatus.PENDING
     session_id: Optional[str] = None
     session_url: Optional[str] = None

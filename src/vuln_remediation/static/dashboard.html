@@ -24,6 +24,11 @@ a{color:#58a6ff;text-decoration:none} a:hover{text-decoration:underline}
 .b.needs_input{background:#3d2e00;color:#d29922}
 .b.completed{background:#0d3117;color:#3fb950}
 .b.failed{background:#3d1117;color:#f85149}
+.p{display:inline-block;padding:.15rem .5rem;border-radius:10px;font-size:.7rem;font-weight:600}
+.p.critical{background:#3d1117;color:#f85149}
+.p.high{background:#3d2e00;color:#d29922}
+.p.medium{background:#0c2d6b;color:#58a6ff}
+.p.low{background:#30363d;color:#8b949e}
 .foot{color:#8b949e;font-size:.8rem;margin-top:1rem}
 .alert{background:#2d1b00;border:1px solid #d29922;border-radius:8px;padding:1rem;margin-bottom:1.5rem;display:none}
 .alert h3{color:#d29922;margin-bottom:.5rem;font-size:.95rem}
@@ -38,7 +43,7 @@ a{color:#58a6ff;text-decoration:none} a:hover{text-decoration:underline}
 <div class="cards" id="m">Loading&hellip;</div>
 <div class="alert" id="alert"></div>
 <span id="filterLabel" style="color:#8b949e;font-size:.85rem"></span>
-<table><thead><tr><th>Issue</th><th>Status</th><th>Devin Session</th><th>Result</th><th>Artifacts</th><th>Audit</th></tr></thead>
+<table><thead><tr><th>Priority</th><th>Issue</th><th>Status</th><th>Devin Session</th><th>Result</th><th>Artifacts</th><th>Audit</th></tr></thead>
 <tbody id="t"><tr><td colspan="4">Loading&hellip;</td></tr></tbody></table>
 <p class="foot" id="f"></p>
 <script>
@@ -59,13 +64,14 @@ function renderTable(){
  const label=activeFilter?` (showing: ${activeFilter}) <a href="#" onclick="filterTable(null);return false" style="font-size:.8rem">clear</a>`:'';
  document.getElementById('filterLabel').innerHTML=label;
  document.getElementById('t').innerHTML=filtered.length?filtered.map(t=>{
-   return `<tr><td><a href="${t.issue_url}" target="_blank">#${t.issue_number}</a> ${t.issue_title}</td>`+
+   return `<tr><td><span class="p ${t.priority||'medium'}">${(t.priority||'medium').toUpperCase()}</span></td>`+
+    `<td><a href="${t.issue_url}" target="_blank">#${t.issue_number}</a> ${t.issue_title}</td>`+
     `<td><span class="b ${t.status}">${t.status}</span></td>`+
     `<td>${t.session_url?`<a href="${t.session_url}" target="_blank">View</a>`:'—'}</td>`+
     `<td>${t.pr_url?`<a href="${t.pr_url}" target="_blank">View PR</a>`:t.error||'—'}</td>`+
     `<td>${t.attachments&&t.attachments.length?t.attachments.map(a=>`<a href="/api/logs/${t.issue_number}/attachments/${a}" target="_blank">${a}</a>`).join(', '):t.pr_url?`<a href="${t.pr_url}/files" target="_blank">PR Diff</a>`:'—'}</td>`+
     `<td>${t.log_file?`<a href="/api/logs/${t.issue_number}" target="_blank">View Log</a>`:'—'}</td></tr>`;
-  }).join(''):'<tr><td colspan="6">No matching tasks.</td></tr>';
+  }).join(''):'<tr><td colspan="7">No matching tasks.</td></tr>';
 }
 
 async function r(){
