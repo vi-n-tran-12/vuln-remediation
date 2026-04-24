@@ -187,3 +187,6 @@ src/vuln_remediation/
 - **Secrets rotation** — Devin API keys and GitHub tokens should be rotated periodically and stored in a vault (e.g., AWS Secrets Manager), not `.env` files.
 - **Rate limiting** — the Devin client retries on 429s, but the GitHub client does not. At scale, the GitHub API's 5000 req/hr limit could be hit during frequent polling. Add the same retry-with-backoff pattern to the GitHub client, and consider caching issue data to reduce API calls.
 - **Horizontal scaling** — the asyncio.Lock prevents races within a single process. For multiple replicas, use distributed locking (e.g., Redis) or a task queue (e.g., Celery).
+- **Integration tests** — unit tests cover core logic (21 passing), but integration tests with mocked Devin/GitHub APIs are needed to verify the full orchestration loop (discover → dispatch → poll → complete) without hitting real services.
+- **Structured logging** — currently uses console-formatted output. Production should output JSON for ingestion by log aggregators (Datadog, CloudWatch, ELK).
+- **Dashboard framework** — the dashboard uses inline JS string templating. Replace with a lightweight framework (e.g., Alpine.js or htmx) for maintainability and XSS safety.
