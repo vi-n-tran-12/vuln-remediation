@@ -275,8 +275,8 @@ class Orchestrator:
             )
             await self._notifier.on_dispatched(task)
             logger.info("task_dispatched", issue=task.issue_number, session_id=session.session_id)
-        except Exception:
-            task.transition(TaskStatus.FAILED, error="Failed to create Devin session")
+        except Exception as exc:
+            task.transition(TaskStatus.FAILED, error=f"Dispatch failed: {exc}")
             logger.exception("dispatch_failed", issue=task.issue_number)
 
     # ------------------------------------------------------------------
